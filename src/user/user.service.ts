@@ -27,6 +27,18 @@ export class UserService {
     return this.buildUserRO(savedUser);
   }
 
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userRepo.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user;
+  }
+
   private buildUserRO(user: User) {
     const userRO = {
       id: user.id,
