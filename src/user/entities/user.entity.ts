@@ -3,9 +3,11 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { MemberHome } from 'src/member_home/entities/member_home.entity';
 
 @Entity()
 export class User {
@@ -20,6 +22,9 @@ export class User {
 
   @Column('text')
   password: string;
+
+  @OneToMany(() => MemberHome, (memberHome) => memberHome.user)
+  memberHomes: MemberHome[];
 
   @BeforeInsert()
   async hashPassword() {
