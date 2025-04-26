@@ -7,12 +7,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
+    private readonly clodinaryService: CloudinaryService,
   ) {}
 
   async create(dto: CreateUserDto) {
@@ -37,6 +40,47 @@ export class UserService {
     //     id: user.id,
     //   }),
     // };
+  }
+
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    file: Express.Multer.File,
+  ) {
+    const user = await this.findById(id);
+
+    if (file) {
+      const result = await this.clodinaryService.uploadFile(file);
+      user.avatar = result.secure_url;
+    }
+
+    if (updateUserDto.name) {
+      user.name = updateUserDto.name;
+    }
+    if (updateUserDto.email) {
+      user.email = updateUserDto.email;
+    }
+    if (updateUserDto.password) {
+      user.password = updateUserDto.password;
+    }
+    if (updateUserDto.phone) {
+      user.phone = updateUserDto.phone;
+    }
+
+    const updatedUser = await this.userRepo.save(user);
+    const { password, ...result } = updatedUser;
+    return result;
+    // let avatarUrl: string | undefined = undefined;
+
+    // if (file) {
+    //   const result = await this.clodinaryService.uploadFile(file);
+    //   avatarUrl = result.secure_url;
+    // }
+
+    // return this.userRepo.update(id, {
+    //   ...uptadeUserDto,
+    //   avatar: avatarUrl || uptadeUserDto.avatar,
+    // });
   }
 
   async findByEmail(email: string): Promise<User> {

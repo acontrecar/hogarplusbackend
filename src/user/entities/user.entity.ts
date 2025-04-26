@@ -23,6 +23,12 @@ export class User {
   @Column('text')
   password: string;
 
+  @Column('text', { nullable: true })
+  avatar?: string;
+
+  @Column('text', { nullable: true })
+  phone?: string;
+
   @OneToMany(() => MemberHome, (memberHome) => memberHome.user)
   memberHomes: MemberHome[];
 
