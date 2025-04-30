@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,7 +16,7 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
-    private readonly clodinaryService: CloudinaryService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async create(dto: CreateUserDto) {
@@ -49,38 +50,38 @@ export class UserService {
   ) {
     const user = await this.findById(id);
 
-    if (file) {
-      const result = await this.clodinaryService.uploadFile(file);
-      user.avatar = result.secure_url;
-    }
+    let avatarUploadedUrl: string | undefined;
 
-    if (updateUserDto.name) {
-      user.name = updateUserDto.name;
-    }
-    if (updateUserDto.email) {
-      user.email = updateUserDto.email;
-    }
-    if (updateUserDto.password) {
-      user.password = updateUserDto.password;
-    }
-    if (updateUserDto.phone) {
-      user.phone = updateUserDto.phone;
-    }
+    try {
+      if (file) {
+        const uploadResult = await this.cloudinaryService.uploadFile(file);
+        avatarUploadedUrl = uploadResult.secure_url;
+        user.avatar = avatarUploadedUrl;
+      }
 
-    const updatedUser = await this.userRepo.save(user);
-    const { password, ...result } = updatedUser;
-    return result;
-    // let avatarUrl: string | undefined = undefined;
+      if (updateUserDto.name) {
+        user.name = updateUserDto.name;
+      }
+      if (updateUserDto.email) {
+        user.email = updateUserDto.email;
+      }
+      if (updateUserDto.password) {
+        user.password = updateUserDto.password;
+      }
+      if (updateUserDto.phone) {
+        user.phone = updateUserDto.phone;
+      }
 
-    // if (file) {
-    //   const result = await this.clodinaryService.uploadFile(file);
-    //   avatarUrl = result.secure_url;
-    // }
+      const updatedUser = await this.userRepo.save(user);
 
-    // return this.userRepo.update(id, {
-    //   ...uptadeUserDto,
-    //   avatar: avatarUrl || uptadeUserDto.avatar,
-    // });
+      const { password, ...result } = updatedUser;
+      return result;
+    } catch (error) {
+      if (avatarUploadedUrl) {
+        await this.cloudinaryService.deleteFileByUrl(avatarUploadedUrl);
+      }
+      throw new InternalServerErrorException('Failed to update user profile.');
+    }
   }
 
   async findByEmail(email: string): Promise<User> {

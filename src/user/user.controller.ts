@@ -20,7 +20,17 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from './entities/user.entity';
 import { buildResponse } from 'src/common/helper/build-response.helper';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('User')
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -40,6 +50,12 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Patch()
   @UseInterceptors(FileInterceptor('image'))
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadTest(
     @UploadedFile() file: Express.Multer.File,
     @Body('updateUserDto') updateUserDto: UpdateUserDto,

@@ -7,11 +7,14 @@ import { USER_AVATAR_IMAGES_FOLDER } from './constants';
 
 @Injectable()
 export class CloudinaryService {
-  uploadFile(file: Express.Multer.File): Promise<CloudinaryResponse> {
+  uploadFile(
+    file: Express.Multer.File,
+    folder: string = USER_AVATAR_IMAGES_FOLDER,
+  ) {
     return new Promise<CloudinaryResponse>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: USER_AVATAR_IMAGES_FOLDER,
+          folder,
           quality: 'auto',
           format: 'webp',
           transformation: [{ width: 500, crop: 'limit' }],
@@ -27,5 +30,18 @@ export class CloudinaryService {
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream);
     });
+  }
+
+  async deleteFileByUrl(url: string): Promise<void> {
+    const publicId = this.extractPublicIdFromUrl(url);
+    await cloudinary.uploader.destroy(publicId);
+  }
+
+  private extractPublicIdFromUrl(url: string): string {
+    const parts = url.split('/');
+    const fileWithExtension = parts.pop(); // image.webp
+    const folder = parts.pop(); // folder
+    const fileName = fileWithExtension.split('.')[0];
+    return `${folder}/${fileName}`;
   }
 }
