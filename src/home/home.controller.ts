@@ -1,15 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  HttpStatus,
+} from '@nestjs/common';
 import { HomeService } from './home.service';
 import { CreateHomeDto } from './dto/create-home.dto';
 import { UpdateHomeDto } from './dto/update-home.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/user/entities/user.entity';
+import { buildResponse } from 'src/common/helper/build-response.helper';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Home')
 @Controller('home')
 export class HomeController {
   constructor(private readonly homeService: HomeService) {}
 
   @Post()
-  create(@Body() createHomeDto: CreateHomeDto) {
-    return this.homeService.create(createHomeDto);
+  @UseGuards(JwtAuthGuard)
+  async create(
+    @Body() createHomeDto: CreateHomeDto,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.create(createHomeDto, user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home created successfully',
+      HttpStatus.CREATED,
+    );
   }
 
   @Get()
