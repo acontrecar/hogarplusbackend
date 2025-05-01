@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +11,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { mapDtoToEntity } from 'src/common/helper/mapDtoToEntity.helper';
 
 @Injectable()
 export class UserService {
@@ -45,36 +47,37 @@ export class UserService {
 
   async update(
     id: number,
-    updateUserDto: UpdateUserDto,
-    file: Express.Multer.File,
+    updateUserDto: UpdateUserDto | string,
+    file?: Express.Multer.File,
   ) {
     const user = await this.findById(id);
 
     let avatarUploadedUrl: string | undefined;
+    let oldAvatarUrl: string | undefined;
 
     try {
       if (file) {
         const uploadResult = await this.cloudinaryService.uploadFile(file);
         avatarUploadedUrl = uploadResult.secure_url;
+        oldAvatarUrl = user.avatar ?? undefined;
         user.avatar = avatarUploadedUrl;
       }
 
-      if (updateUserDto.name) {
-        user.name = updateUserDto.name;
-      }
-      if (updateUserDto.email) {
-        user.email = updateUserDto.email;
-      }
-      if (updateUserDto.password) {
-        user.password = updateUserDto.password;
-      }
-      if (updateUserDto.phone) {
-        user.phone = updateUserDto.phone;
-      }
+      const parsedDto =
+        typeof updateUserDto === 'string'
+          ? JSON.parse(updateUserDto)
+          : updateUserDto;
+
+      Object.assign(user, parsedDto);
 
       const updatedUser = await this.userRepo.save(user);
 
+      if (oldAvatarUrl) {
+        await this.cloudinaryService.deleteFileByUrl(oldAvatarUrl);
+      }
+
       const { password, ...result } = updatedUser;
+
       return result;
     } catch (error) {
       if (avatarUploadedUrl) {

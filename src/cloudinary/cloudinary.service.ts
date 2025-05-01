@@ -41,7 +41,7 @@ export class CloudinaryService {
     const parts = url.split('/');
     const fileWithExtension = parts.pop(); // image.webp
     const folder = parts.pop(); // folder
-    const fileName = fileWithExtension.split('.')[0];
+    const fileName = fileWithExtension!.split('.')[0];
     return `${folder}/${fileName}`;
   }
 }

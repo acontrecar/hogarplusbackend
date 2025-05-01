@@ -76,7 +76,7 @@ export class AuthService {
   async checkStatus(userRequest: { id: number; email: string }) {
     const user = await this.userService.findById(userRequest.id);
     return {
-      user: this.userService.buildUserRO(user),
+      user,
       token: this.getJwtToken({
         email: user.email,
         id: user.id,
