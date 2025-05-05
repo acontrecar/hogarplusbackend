@@ -24,8 +24,8 @@ import { ApiTags } from '@nestjs/swagger';
 export class HomeController {
   constructor(private readonly homeService: HomeService) {}
 
-  @Post()
   @UseGuards(JwtAuthGuard)
+  @Post()
   async create(
     @Body() createHomeDto: CreateHomeDto,
     @GetUser() user: User,
@@ -37,6 +37,34 @@ export class HomeController {
       req.url,
       'Home created successfully',
       HttpStatus.CREATED,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async findHomesByUserId(@GetUser() user: User, @Req() req: Request) {
+    const result = await this.homeService.findHomesByUserId(user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home found successfully',
+      HttpStatus.OK,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async findHomeDetails(
+    @Param('id') homeId: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.findHomeDetails(homeId, user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home found successfully',
+      HttpStatus.OK,
     );
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHomeDto } from './dto/create-home.dto';
 import { UpdateHomeDto } from './dto/update-home.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,7 @@ import { Home } from './entities/home.entity';
 import { Repository } from 'typeorm';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { MemberHomeRole } from 'src/member_home/enums/member-home-role.enum';
+import { GetHomeMembersDto } from './dto/get-home-members.dto';
 
 @Injectable()
 export class HomeService {
@@ -34,6 +35,60 @@ export class HomeService {
     return {
       home: savedHome,
     };
+  }
+
+  async findHomesByUserId(userId: number) {
+    const memberHomes = await this.memberHomeRepo.find({
+      where: { user: { id: userId } },
+      relations: ['home'],
+    });
+
+    const homes = memberHomes.map((memberHome) => ({
+      id: memberHome.home.id,
+      name: memberHome.home.name,
+      invitationCode: memberHome.home.invitationCode,
+      isAdmin: memberHome.role === MemberHomeRole.ADMIN,
+    }));
+
+    return { homes };
+  }
+
+  async findHomeDetails(homeId: string, userId: number) {
+    const home = await this.homeRepo.findOne({
+      where: { id: +homeId },
+      relations: {
+        members: { user: true },
+        // members: true,
+      },
+    });
+
+    if (!home) {
+      throw new NotFoundException('Home not found');
+    }
+
+    const memberHomes = await this.memberHomeRepo.findOne({
+      where: { home: { id: +homeId }, user: { id: userId } },
+    });
+
+    if (!memberHomes) {
+      throw new NotFoundException('Member not found in this home');
+    }
+
+    const response: GetHomeMembersDto = {
+      id: home.id,
+      name: home.name,
+      invitationCode: home.invitationCode,
+      members: home.members.map((m) => ({
+        userId: m.user.id,
+        memberId: m.id,
+        name: m.user.name,
+        email: m.user.email,
+        avatar: m.user.avatar,
+        isAdmin: m.role === MemberHomeRole.ADMIN,
+      })),
+    };
+
+    return { home: response };
   }
 
   findAll() {
