@@ -68,6 +68,38 @@ export class HomeController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async remove(
+    @Param('id') homeId: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.deleteHome(+homeId, user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home deleted successfully',
+      HttpStatus.OK,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/exit/:id')
+  async exitFromHome(
+    @Param('id') homeId: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.exitFromHome(+homeId, user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home deleted successfully',
+      HttpStatus.OK,
+    );
+  }
+
   @Get()
   findAll() {
     return this.homeService.findAll();
@@ -81,10 +113,5 @@ export class HomeController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateHomeDto: UpdateHomeDto) {
     return this.homeService.update(+id, updateHomeDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.homeService.remove(+id);
   }
 }

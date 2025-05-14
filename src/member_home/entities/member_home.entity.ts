@@ -14,10 +14,16 @@ export class MemberHome {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @ManyToOne(() => User, (user) => user.memberHomes)
+  @ManyToOne(() => User, (user) => user.memberHomes, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   user: User;
 
-  @ManyToOne(() => Home, (home) => home.members)
+  @ManyToOne(() => Home, (home) => home.members, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   home: Home;
 
   @Column({

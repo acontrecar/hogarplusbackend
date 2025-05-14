@@ -25,7 +25,7 @@ export class UpdateUserDto {
   })
   @IsOptional()
   @MinLength(6, { message: 'Password must be at least 6 characters' })
-  readonly password?: string;
+  password?: string;
 
   @ApiPropertyOptional({
     example: '+34123456789',

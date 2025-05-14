@@ -25,6 +25,7 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
+    this.logger.log(`COntrase: ${user.password}`);
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password, ...result } = user;
@@ -56,7 +57,12 @@ export class AuthService {
       throw new BadRequestException('Email already exists');
     }
 
-    const user = this.userRepo.create(dto);
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const user = this.userRepo.create({
+      ...dto,
+      password: hashedPassword,
+    });
     // const savedUser = await this.userRepo.save(user);
 
     // return this.buildUserRO(savedUser);

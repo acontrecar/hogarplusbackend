@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateHomeDto } from './dto/create-home.dto';
 import { UpdateHomeDto } from './dto/update-home.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -89,6 +93,64 @@ export class HomeService {
     };
 
     return { home: response };
+  }
+
+  async deleteHome(homeId: number, userId: number) {
+    const home = await this.homeRepo.findOne({
+      where: { id: homeId },
+      relations: {
+        members: { user: true },
+      },
+    });
+
+    if (!home) {
+      throw new NotFoundException('Home with that user not found');
+    }
+
+    const isAdmin = home.members.some(
+      (m) => m.user.id === userId && m.role === MemberHomeRole.ADMIN,
+    );
+
+    if (!isAdmin) {
+      throw new ForbiddenException('You are not admin of this home');
+    }
+
+    await this.homeRepo.delete({ id: homeId });
+
+    return { message: 'Home deleted successfully' };
+  }
+
+  async exitFromHome(homeId: number, userId: number) {
+    const home = await this.homeRepo.findOne({
+      where: { id: homeId },
+      relations: {
+        members: { user: true },
+      },
+    });
+
+    if (!home) {
+      throw new NotFoundException('Home with that user not found');
+    }
+
+    const isAdmin = home.members.some(
+      (m) => m.user.id === userId && m.role === MemberHomeRole.ADMIN,
+    );
+
+    if (isAdmin) {
+      throw new ForbiddenException('Yoy cannot exit from admin home');
+    }
+
+    const memberHome = await this.memberHomeRepo.findOne({
+      where: { home: { id: homeId }, user: { id: userId } },
+    });
+
+    if (!memberHome) {
+      throw new NotFoundException('Member not found in this home');
+    }
+
+    await this.memberHomeRepo.delete({ id: memberHome.id });
+
+    return { message: 'Member exited from home successfully' };
   }
 
   findAll() {

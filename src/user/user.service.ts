@@ -12,9 +12,11 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { mapDtoToEntity } from 'src/common/helper/mapDtoToEntity.helper';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
@@ -54,13 +56,16 @@ export class UserService {
 
     let avatarUploadedUrl: string | undefined;
     let oldAvatarUrl: string | undefined;
+    let oldAvatarPublicId: string | undefined;
 
     try {
       if (file) {
         const uploadResult = await this.cloudinaryService.uploadFile(file);
         avatarUploadedUrl = uploadResult.secure_url;
+        oldAvatarPublicId = user.avatarPublicId ?? undefined;
         oldAvatarUrl = user.avatar ?? undefined;
         user.avatar = avatarUploadedUrl;
+        user.avatarPublicId = uploadResult.public_id;
       }
 
       const parsedDto =
@@ -68,15 +73,32 @@ export class UserService {
           ? JSON.parse(updateUserDto)
           : updateUserDto;
 
-      Object.assign(user, parsedDto);
+      const cleanedDto: UpdateUserDto = Object.fromEntries(
+        Object.entries(parsedDto).filter(
+          ([_, v]) => v !== undefined && v !== '',
+        ),
+      );
+
+      if (cleanedDto.password) {
+        cleanedDto.password = await bcrypt.hash(cleanedDto.password, 10);
+      }
+
+      Object.assign(user, cleanedDto);
+
+      this.logger.log(`Dto: ${JSON.stringify(cleanedDto)}`);
+
+      // Object.assign(user, cleanedDto);
 
       const updatedUser = await this.userRepo.save(user);
 
-      if (oldAvatarUrl) {
-        await this.cloudinaryService.deleteFileByUrl(oldAvatarUrl);
+      if (oldAvatarPublicId) {
+        // await this.cloudinaryService.deleteFileByUrl(oldAvatarUrl);
+        await this.cloudinaryService.deleteFile(oldAvatarPublicId);
       }
 
       const { password, ...result } = updatedUser;
+
+      this.logger.log(`password: ${password}`);
 
       return result;
     } catch (error) {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryResponse } from './cloudinary-response';
 // const streamifier = require('streamifier');
@@ -7,6 +7,8 @@ import { USER_AVATAR_IMAGES_FOLDER } from './constants';
 
 @Injectable()
 export class CloudinaryService {
+  private readonly logger = new Logger(CloudinaryService.name);
+
   uploadFile(
     file: Express.Multer.File,
     folder: string = USER_AVATAR_IMAGES_FOLDER,
@@ -30,6 +32,14 @@ export class CloudinaryService {
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream);
     });
+  }
+
+  async deleteFile(publicId: string): Promise<void> {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+      this.logger.error(`Error deleting file from Cloudinary: ${error}`);
+    }
   }
 
   async deleteFileByUrl(url: string): Promise<void> {
