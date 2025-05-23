@@ -85,7 +85,28 @@ export class HomeController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete('/exit/:id')
+  @Delete(':id/person/:personId')
+  async deletePerson(
+    @Param('id') homeId: string,
+    @Param('personId') personId: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.deletePerson(
+      +homeId,
+      user.id,
+      +personId,
+    );
+    return buildResponse(
+      result,
+      req.url,
+      'Person deleted from home successfully',
+      HttpStatus.OK,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('exit/:id')
   async exitFromHome(
     @Param('id') homeId: string,
     @GetUser() user: User,
@@ -95,7 +116,23 @@ export class HomeController {
     return buildResponse(
       result,
       req.url,
-      'Home deleted successfully',
+      'Home exited successfully',
+      HttpStatus.OK,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('join/:code')
+  async joinHome(
+    @Param('code') code: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.homeService.joinHome(code, user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home joined successfully',
       HttpStatus.OK,
     );
   }
@@ -103,6 +140,17 @@ export class HomeController {
   @Get()
   findAll() {
     return this.homeService.findAll();
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get('/user/get')
+  async findAllHomesByUser(@GetUser() user: User, @Req() req: Request) {
+    const result = await this.homeService.findAllHomesByUser(user.id);
+    return buildResponse(
+      result,
+      req.url,
+      'Home found successfully',
+      HttpStatus.OK,
+    );
   }
 
   @Get(':id')

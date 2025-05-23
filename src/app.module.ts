@@ -11,6 +11,7 @@ import { MemberHomeModule } from './member_home/member_home.module';
 import { Home } from './home/entities/home.entity';
 import { MemberHome } from './member_home/entities/member_home.entity';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     HomeModule,
     MemberHomeModule,
     CloudinaryModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService],

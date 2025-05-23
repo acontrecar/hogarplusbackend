@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateHomeDto } from './dto/create-home.dto';
@@ -14,6 +15,7 @@ import { GetHomeMembersDto } from './dto/get-home-members.dto';
 
 @Injectable()
 export class HomeService {
+  private readonly logger = new Logger(HomeService.name);
   constructor(
     @InjectRepository(Home)
     private readonly homeRepo: Repository<Home>,
@@ -153,8 +155,92 @@ export class HomeService {
     return { message: 'Member exited from home successfully' };
   }
 
+  async deletePerson(homeId: number, userId: number, personId: number) {
+    const home = await this.homeRepo.findOne({
+      where: { id: homeId },
+      relations: {
+        members: { user: true },
+      },
+    });
+
+    if (!home) {
+      throw new NotFoundException('Home with that user not found');
+    }
+
+    const isAdmin = home.members.some(
+      (m) => m.user.id === userId && m.role === MemberHomeRole.ADMIN,
+    );
+
+    if (!isAdmin) {
+      throw new ForbiddenException('You are not admin of this home');
+    }
+
+    const memberHome = await this.memberHomeRepo.findOne({
+      where: { home: { id: homeId }, id: personId },
+    });
+
+    if (!memberHome) {
+      throw new NotFoundException('Member not found in this home');
+    }
+
+    await this.memberHomeRepo.delete({ id: memberHome.id });
+
+    return { message: 'Member deleted from home successfully' };
+  }
+
+  async joinHome(code: string, userId: number) {
+    this.logger.log('QUe paosa porra');
+    this.logger.log(`code: -${code}- userId: -${userId}-`);
+    const home = await this.homeRepo.findOne({
+      where: {
+        invitationCode: code,
+      },
+      relations: {
+        members: { user: true },
+      },
+    });
+
+    this.logger.log(`home: ${JSON.stringify(home)}`);
+
+    if (!home) {
+      throw new NotFoundException('Home not found');
+    }
+
+    const isAlreadyMember = home.members.some((m) => m.user.id === userId);
+
+    if (isAlreadyMember) {
+      throw new ForbiddenException('Member already in this home');
+    }
+
+    const member = this.memberHomeRepo.create({
+      user: { id: userId },
+      home: { id: home.id },
+    });
+
+    await this.memberHomeRepo.save(member);
+
+    // return {
+    //   data: {
+    //     homeId: home.id,
+    //     name: home.name,
+    //   },
+    // };
+
+    return { message: 'Member joined home successfully' };
+  }
+
   findAll() {
     return `This action returns all home`;
+  }
+
+  async findAllHomesByUser(userId: number) {
+    const homes = await this.homeRepo.find({
+      where: { members: { user: { id: userId } } },
+      relations: ['members'],
+      select: ['id', 'name'],
+    });
+
+    return homes;
   }
 
   findOne(id: number) {
