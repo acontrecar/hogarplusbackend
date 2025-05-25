@@ -12,6 +12,7 @@ import { Home } from './home/entities/home.entity';
 import { MemberHome } from './member_home/entities/member_home.entity';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { TaskModule } from './task/task.module';
+import { Task } from './task/entities/task.entity';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { TaskModule } from './task/task.module';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         synchronize: true,
-        entities: [User, Home, MemberHome],
+        entities: [User, Home, MemberHome, Task],
       }),
     }),
     UserModule,

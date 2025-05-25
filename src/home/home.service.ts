@@ -8,7 +8,7 @@ import { CreateHomeDto } from './dto/create-home.dto';
 import { UpdateHomeDto } from './dto/update-home.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Home } from './entities/home.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { MemberHomeRole } from 'src/member_home/enums/member-home-role.enum';
 import { GetHomeMembersDto } from './dto/get-home-members.dto';
@@ -234,10 +234,18 @@ export class HomeService {
   }
 
   async findAllHomesByUser(userId: number) {
+    const userMember = await this.memberHomeRepo.find({
+      where: { user: { id: userId } },
+      relations: ['home'],
+      select: ['home'],
+    });
+
+    const homesIds = userMember.map((m) => m.home.id);
+
     const homes = await this.homeRepo.find({
-      where: { members: { user: { id: userId } } },
+      where: { id: In(homesIds) },
       relations: ['members'],
-      select: ['id', 'name'],
+      select: ['id', 'name', 'members'],
     });
 
     return homes;

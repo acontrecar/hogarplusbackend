@@ -1,9 +1,11 @@
+import { Home } from 'src/home/entities/home.entity';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -11,8 +13,8 @@ import {
 
 @Entity()
 export class Task {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
   @Column('text')
   title: string;
@@ -43,7 +45,10 @@ export class Task {
   })
   priority: string;
 
-  @ManyToOne(() => MemberHome)
+  @ManyToOne(() => Home)
+  house: Home;
+
+  @ManyToMany(() => MemberHome)
   @JoinTable()
   assignedTo: MemberHome[];
 
