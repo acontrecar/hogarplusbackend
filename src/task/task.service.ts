@@ -60,7 +60,7 @@ export class TaskService {
 
     await this.taskRepo.save(task);
 
-    return task;
+    return { task };
   }
 
   findAll() {

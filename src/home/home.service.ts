@@ -244,11 +244,22 @@ export class HomeService {
 
     const homes = await this.homeRepo.find({
       where: { id: In(homesIds) },
-      relations: ['members'],
+      relations: ['members', 'members.user'],
       select: ['id', 'name', 'members'],
     });
 
-    return homes;
+    const response = homes.map((h) => ({
+      id: h.id,
+      name: h.name,
+      members: h.members.map((m) => ({
+        id: m.id,
+        name: m.user.name,
+        email: m.user.email,
+        role: m.role === MemberHomeRole.ADMIN ? 'admin' : 'member',
+      })),
+    }));
+
+    return { homes: response };
   }
 
   findOne(id: number) {
