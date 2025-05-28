@@ -45,14 +45,14 @@ export class Task {
   })
   priority: string;
 
-  @ManyToOne(() => Home)
+  @ManyToOne(() => Home, { onDelete: 'CASCADE' })
   house: Home;
 
-  @ManyToMany(() => MemberHome)
+  @ManyToMany(() => MemberHome, (memberHome) => memberHome.createdTasks)
   @JoinTable()
   assignedTo: MemberHome[];
 
-  @ManyToOne(() => MemberHome)
+  @ManyToOne(() => MemberHome, (memberHome) => memberHome.createdTasks)
   createdBy: MemberHome;
 
   @CreateDateColumn()

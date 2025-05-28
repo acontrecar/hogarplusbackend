@@ -4,10 +4,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { MemberHomeRole } from '../enums/member-home-role.enum';
+import { Task } from 'src/task/entities/task.entity';
 
 @Entity()
 export class MemberHome {
@@ -32,6 +35,12 @@ export class MemberHome {
     default: MemberHomeRole.MEMBER,
   })
   role: string;
+
+  @OneToMany(() => Task, (task) => task.createdBy)
+  createdTasks: Task[];
+
+  @ManyToMany(() => Task, (task) => task.assignedTo)
+  assignedTasks: Task[];
 
   @CreateDateColumn()
   createdAt: Date;

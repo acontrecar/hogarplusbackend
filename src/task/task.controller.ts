@@ -40,6 +40,17 @@ export class TaskController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/house/:houseId')
+  async findTasksByHouse(
+    @Param('houseId') houseId: string,
+    @GetUser() user: User,
+    @Req() req: Request,
+  ) {
+    const result = await this.taskService.findTasksByHouse(+houseId, user.id);
+    return buildResponse(result, req.url, 'Tasks found successfully');
+  }
+
   @Get()
   findAll() {
     return this.taskService.findAll();

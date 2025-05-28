@@ -63,6 +63,61 @@ export class TaskService {
     return { task };
   }
 
+  async findTasksByHouse(houseId: number, userId: number) {
+    // 1. Verificar que el usuario es miembro de la casa
+    const memberHome = await this.memberHomeRepo.findOne({
+      where: {
+        user: { id: userId },
+        home: { id: houseId },
+      },
+      relations: ['home', 'user'],
+    });
+
+    if (!memberHome) {
+      throw new ForbiddenException('User is not a member of this house');
+    }
+
+    // 2. Obtener tareas con relaciones completas
+    const tasks = await this.taskRepo.find({
+      where: [
+        {
+          house: { id: houseId },
+          createdBy: { id: memberHome.id },
+        },
+        {
+          house: { id: houseId },
+          assignedTo: { id: memberHome.id },
+        },
+      ],
+      relations: [
+        'house',
+        'assignedTo',
+        'assignedTo.user',
+        'createdBy',
+        'createdBy.user',
+      ],
+    });
+
+    // 3. Formatear la respuesta para incluir los nombres
+    const formattedTasks = tasks.map((task) => ({
+      ...task,
+      assignedTo: task.assignedTo.map((member) => ({
+        id: member.id,
+        name: member.user.name,
+        role: member.role,
+        createdAt: member.createdAt,
+      })),
+      createdBy: {
+        id: task.createdBy.id,
+        name: task.createdBy.user.name,
+        role: task.createdBy.role,
+        createdAt: task.createdBy.createdAt,
+      },
+    }));
+
+    return { tasks: formattedTasks };
+  }
+
   findAll() {
     return `This action returns all task`;
   }
