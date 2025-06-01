@@ -18,6 +18,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { buildResponse } from 'src/common/helper/build-response.helper';
+import { DeleteTaskDto } from './dto/delete-task.dto';
 
 @ApiTags('Task')
 @Controller('task')
@@ -26,18 +27,20 @@ export class TaskController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  async create(
-    @Body() createTaskDto: CreateTaskDto,
+  async create(@Body() createTaskDto: CreateTaskDto, @GetUser() user: User, @Req() req: Request) {
+    const result = await this.taskService.create(createTaskDto, user.id);
+    return buildResponse(result, req.url, 'Task created successfully', HttpStatus.CREATED);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/house')
+  async removeTaskByHouse(
+    @Body() deleteTaskDto: DeleteTaskDto,
     @GetUser() user: User,
     @Req() req: Request,
   ) {
-    const result = await this.taskService.create(createTaskDto, user.id);
-    return buildResponse(
-      result,
-      req.url,
-      'Task created successfully',
-      HttpStatus.CREATED,
-    );
+    const result = await this.taskService.removeTaskByHouse(deleteTaskDto, user.id);
+    return buildResponse(result, req.url, 'Task removed successfully');
   }
 
   @UseGuards(JwtAuthGuard)
@@ -49,6 +52,13 @@ export class TaskController {
   ) {
     const result = await this.taskService.findTasksByHouse(+houseId, user.id);
     return buildResponse(result, req.url, 'Tasks found successfully');
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/complete/:taskId')
+  async completeTask(@Param('taskId') taskId: string, @GetUser() user: User, @Req() req: Request) {
+    const result = await this.taskService.completeTask(+taskId, user.id);
+    return buildResponse(result, req.url, 'Task completed successfully');
   }
 
   @Get()

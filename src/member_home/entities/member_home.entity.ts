@@ -42,6 +42,9 @@ export class MemberHome {
   @ManyToMany(() => Task, (task) => task.assignedTo)
   assignedTasks: Task[];
 
+  @ManyToMany(() => Task, (task) => task.completedBy)
+  completedByTasks: Task[];
+
   @CreateDateColumn()
   createdAt: Date;
 }

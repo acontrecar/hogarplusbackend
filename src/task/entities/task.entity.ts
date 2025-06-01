@@ -55,6 +55,9 @@ export class Task {
   @ManyToOne(() => MemberHome, (memberHome) => memberHome.createdTasks)
   createdBy: MemberHome;
 
+  @ManyToOne(() => MemberHome, (memberHome) => memberHome.completedByTasks, { nullable: true })
+  completedBy?: MemberHome;
+
   @CreateDateColumn()
   createdAt: Date;
 
