@@ -113,7 +113,15 @@ export class TaskService {
           assignedTo: { id: memberHome.id },
         },
       ],
-      relations: ['house', 'assignedTo', 'assignedTo.user', 'createdBy', 'createdBy.user'],
+      relations: [
+        'house',
+        'assignedTo',
+        'assignedTo.user',
+        'createdBy',
+        'createdBy.user',
+        'completedBy',
+        'createdBy.user',
+      ],
     });
 
     // 3. Formatear la respuesta para incluir los nombres
@@ -131,6 +139,12 @@ export class TaskService {
         role: task.createdBy.role,
         createdAt: task.createdBy.createdAt,
       },
+      completedBy: task.completedBy?.map((member) => ({
+        id: member.id,
+        name: member.user.name,
+        role: member.role,
+        createdAt: member.createdAt,
+      })),
     }));
 
     return { tasks: formattedTasks };
@@ -171,7 +185,7 @@ export class TaskService {
         'house',
         'completedBy',
         'createdBy.user',
-        'completedBy',
+        'completedBy.user',
       ],
     });
 
@@ -193,9 +207,10 @@ export class TaskService {
 
     task.assignedTo = task.assignedTo.filter((member) => member.id !== memberHome.id);
 
+    task.completedBy?.push(memberHome);
+
     if (task.assignedTo.length === 0) {
       task.status = 'completed';
-      task.completedBy = memberHome;
     }
 
     await this.taskRepo.save(task);
@@ -215,12 +230,12 @@ export class TaskService {
           role: task.createdBy.role,
           createdAt: task.createdBy.createdAt,
         },
-        completedBy: {
-          id: task.completedBy?.id,
-          name: task.completedBy?.user.name,
-          role: task.completedBy?.role,
-          createdAt: task.completedBy?.createdAt,
-        },
+        completedBy: task.completedBy?.map((member) => ({
+          id: member.id,
+          name: member.user.name,
+          role: member.role,
+          createdAt: member.createdAt,
+        })),
       },
     };
 

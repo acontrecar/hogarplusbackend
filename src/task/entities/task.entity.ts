@@ -55,8 +55,9 @@ export class Task {
   @ManyToOne(() => MemberHome, (memberHome) => memberHome.createdTasks)
   createdBy: MemberHome;
 
-  @ManyToOne(() => MemberHome, (memberHome) => memberHome.completedByTasks, { nullable: true })
-  completedBy?: MemberHome;
+  @ManyToMany(() => MemberHome, (memberHome) => memberHome.completedByTasks)
+  @JoinTable({ name: 'task_completed_by' })
+  completedBy?: MemberHome[];
 
   @CreateDateColumn()
   createdAt: Date;
