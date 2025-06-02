@@ -33,7 +33,7 @@ export class TaskController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete('/house')
+  @Post('/house')
   async removeTaskByHouse(
     @Body() deleteTaskDto: DeleteTaskDto,
     @GetUser() user: User,

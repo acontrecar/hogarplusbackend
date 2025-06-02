@@ -60,7 +60,16 @@ export class TaskService {
     // 4. Obtener la tarea recién creada con todas las relaciones
     const createdTask = await this.taskRepo.findOne({
       where: { id: task.id },
-      relations: ['house', 'assignedTo', 'assignedTo.user', 'createdBy', 'createdBy.user'],
+      relations: [
+        'house',
+        'assignedTo',
+        'assignedTo.user',
+        'createdBy',
+        'createdBy.user',
+        'completedBy',
+        'completedBy.user',
+        'createdBy.user',
+      ],
     });
 
     if (!createdTask) {
@@ -73,12 +82,14 @@ export class TaskService {
       assignedTo: createdTask.assignedTo.map((member) => ({
         id: member.id,
         name: member.user.name,
+        userId: member.user.id,
         role: member.role,
         createdAt: member.createdAt,
       })),
       createdBy: {
         id: createdTask.createdBy.id,
         name: createdTask.createdBy.user.name,
+        userId: createdTask.createdBy.user.id,
         role: createdTask.createdBy.role,
         createdAt: createdTask.createdBy.createdAt,
       },
@@ -120,12 +131,68 @@ export class TaskService {
         'createdBy',
         'createdBy.user',
         'completedBy',
+        'completedBy.user',
         'createdBy.user',
       ],
     });
 
     // 3. Formatear la respuesta para incluir los nombres
     const formattedTasks = tasks.map((task) => ({
+      ...task,
+      assignedTo: task.assignedTo.map((member) => ({
+        id: member.id,
+        name: member.user.name,
+        userId: member.user.id,
+        role: member.role,
+        createdAt: member.createdAt,
+      })),
+      createdBy: {
+        id: task.createdBy.id,
+        userId: task.createdBy.user.id,
+        name: task.createdBy.user.name,
+        role: task.createdBy.role,
+        createdAt: task.createdBy.createdAt,
+      },
+      completedBy: task.completedBy?.map((member) => ({
+        id: member?.id,
+        name: member?.user?.name,
+        userId: member?.user?.id,
+        role: member?.role,
+        createdAt: member?.createdAt,
+      })),
+    }));
+
+    return { tasks: formattedTasks };
+  }
+
+  async removeTaskByHouse(deleteTaskDto: DeleteTaskDto, userId: number) {
+    const { houseId, taskId } = deleteTaskDto;
+
+    const task = await this.taskRepo.findOne({
+      where: {
+        id: taskId,
+        house: { id: houseId },
+        createdBy: {
+          user: { id: userId },
+        },
+      },
+      relations: [
+        'assignedTo',
+        'assignedTo.user',
+        'house',
+        'completedBy',
+        'createdBy.user',
+        'completedBy.user',
+      ],
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    await this.taskRepo.delete(task.id);
+
+    const taskToReturn = {
       ...task,
       assignedTo: task.assignedTo.map((member) => ({
         id: member.id,
@@ -145,30 +212,9 @@ export class TaskService {
         role: member.role,
         createdAt: member.createdAt,
       })),
-    }));
+    };
 
-    return { tasks: formattedTasks };
-  }
-
-  async removeTaskByHouse(deleteTaskDto: DeleteTaskDto, userId: number) {
-    const { houseId, taskId } = deleteTaskDto;
-
-    const task = await this.taskRepo.findOne({
-      where: {
-        id: taskId,
-        house: { id: houseId },
-        createdBy: {
-          user: { id: userId },
-        },
-      },
-    });
-
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    await this.taskRepo.delete(task.id);
-    return { task };
+    return { task: taskToReturn };
   }
 
   async completeTask(taskId: number, userId: number) {
@@ -216,27 +262,28 @@ export class TaskService {
     await this.taskRepo.save(task);
 
     const taskToReturn = {
-      task: {
-        ...task,
-        assignedTo: task.assignedTo.map((member) => ({
-          id: member.id,
-          name: member.user.name,
-          role: member.role,
-          createdAt: member.createdAt,
-        })),
-        createdBy: {
-          id: task.createdBy.id,
-          name: task.createdBy.user.name,
-          role: task.createdBy.role,
-          createdAt: task.createdBy.createdAt,
-        },
-        completedBy: task.completedBy?.map((member) => ({
-          id: member.id,
-          name: member.user.name,
-          role: member.role,
-          createdAt: member.createdAt,
-        })),
+      ...task,
+      assignedTo: task.assignedTo.map((member) => ({
+        id: member.id,
+        name: member.user.name,
+        userId: member.user.id,
+        role: member.role,
+        createdAt: member.createdAt,
+      })),
+      createdBy: {
+        id: task.createdBy.id,
+        name: task.createdBy.user.name,
+        userId: task.createdBy?.user?.id,
+        role: task.createdBy.role,
+        createdAt: task.createdBy.createdAt,
       },
+      completedBy: task.completedBy?.map((member) => ({
+        id: member.id,
+        name: member.user.name,
+        userId: member?.user?.id,
+        role: member.role,
+        createdAt: member.createdAt,
+      })),
     };
 
     return {
