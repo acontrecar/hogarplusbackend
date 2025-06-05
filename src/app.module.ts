@@ -13,6 +13,9 @@ import { MemberHome } from './member_home/entities/member_home.entity';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { TaskModule } from './task/task.module';
 import { Task } from './task/entities/task.entity';
+import { DebtsModule } from './debts/debts.module';
+import { Debt } from './debts/entities/debt.entity';
+import { DebtMember } from './debts/entities/debtMember.entity';
 
 @Module({
   imports: [
@@ -31,7 +34,7 @@ import { Task } from './task/entities/task.entity';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         synchronize: true,
-        entities: [User, Home, MemberHome, Task],
+        entities: [User, Home, MemberHome, Task, Debt, DebtMember],
       }),
     }),
     UserModule,
@@ -40,6 +43,7 @@ import { Task } from './task/entities/task.entity';
     MemberHomeModule,
     CloudinaryModule,
     TaskModule,
+    DebtsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,3 +1,4 @@
+import { Debt } from 'src/debts/entities/debt.entity';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -14,4 +15,7 @@ export class Home {
 
   @OneToMany(() => MemberHome, (memberHome) => memberHome.home)
   members: MemberHome[];
+
+  @OneToMany(() => Debt, (debt) => debt.home)
+  debts: Debt[];
 }
