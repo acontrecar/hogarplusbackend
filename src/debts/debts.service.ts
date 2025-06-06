@@ -2,11 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateDebtDto } from './dto/create-debt.dto';
 import { UpdateDebtDto } from './dto/update-debt.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Home } from 'src/home/entities/home.entity';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { DebtMember } from './entities/debtMember.entity';
 import { Debt } from './entities/debt.entity';
+import { DebtStatus } from './infraestructure/debt.enums';
 
 @Injectable()
 export class DebtsService {
@@ -49,24 +50,56 @@ export class DebtsService {
         throw new BadRequestException('Creditor must belong to the specified home');
       }
 
-      return {
+      const affectedMembers = await manager.find(MemberHome, {
+        where: { id: In(affectedMemberIds), home: { id: homeId } },
+        relations: ['home'],
+      });
+
+      if (affectedMembers.length !== affectedMemberIds.length) {
+        throw new BadRequestException('Members must belong to the specified home');
+      }
+
+      const memberFromDiferrentHome = affectedMembers.filter((member) => member.home.id !== homeId);
+
+      if (memberFromDiferrentHome.length > 0)
+        throw new BadRequestException('Members must belong to the specified home');
+
+      const amountPerMember = Number((amount / affectedMembers.length).toFixed(2));
+
+      const totalCalculated = amountPerMember * (affectedMemberIds.length - 1);
+      const lastMemberAmount = Number((amount - totalCalculated).toFixed(2));
+
+      const debt = manager.create(Debt, {
+        description,
+        amount,
+        status: DebtStatus.PENDING,
         creditor,
-      };
+        home,
+      });
+
+      const savedDebt = await manager.save(debt);
+
+      const debtMembers = affectedMembers.map((member, index) => {
+        const memberAmount =
+          index === affectedMembers.length - 1 ? lastMemberAmount : amountPerMember;
+
+        return manager.create(DebtMember, {
+          debt: savedDebt,
+          debtor: member,
+          amount: memberAmount,
+          isPaid: false,
+        });
+      });
+
+      await manager.save(debtMembers);
+
+      // return await manager.findOne(Debt, {
+      //   where: { id: savedDebt.id },
+      //   relations: ['creditor', 'home', 'affectedMembers', 'affectedMembers.debtor'],
+      // });
+
+      return { message: 'Debts created successfully' };
     });
-    // const home = await this.homeRepository.findOne({
-    //   where: { id: homeId },
-    // });
-
-    // if (!home) {
-    //   throw new NotFoundException('Casa no encontrada');
-    // }
-
-    // const creditor = await this.memberHomeRepository.findOne({
-    //   where: { home: { id: homeId }, user: { id: creditorId } },
-    //   relations: ['user'],
-    // });
-
-    // return 'This action adds a new debt';
   }
 
   findAll() {
