@@ -251,6 +251,7 @@ export class DebtsService {
     const myDebts = await this.debtMemberRepository.find({
       where: {
         debtor: { user: { id: userId } },
+        debt: { home: { id: homeId } },
         isPaid: false,
       },
       relations: ['debt', 'debt.creditor', 'debt.creditor.user'],
