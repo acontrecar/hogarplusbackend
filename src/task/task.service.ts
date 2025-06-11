@@ -3,9 +3,10 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
-import { In, Repository } from 'typeorm';
+import { In, MoreThanOrEqual, Repository } from 'typeorm';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { DeleteTaskDto } from './dto/delete-task.dto';
+import { SummaryDto } from './dto/summary.dto';
 
 @Injectable()
 export class TaskService {
@@ -288,6 +289,41 @@ export class TaskService {
 
     return {
       task: taskToReturn,
+    };
+  }
+
+  async summary(houseId: number, userId: number): Promise<SummaryDto> {
+    const tasks = await this.taskRepo.find({
+      where: {
+        house: { id: houseId },
+        assignedTo: {
+          user: { id: userId },
+        },
+      },
+      relations: [
+        // 'assignedTo',
+        // 'assignedTo.user',
+        // 'house',
+        // 'completedBy',
+        // 'createdBy.user',
+        // 'completedBy.user',
+      ],
+    });
+
+    const pendingTasks = tasks.filter((task) => task.status === 'pending');
+    const numberOfTasksUrgent = pendingTasks.filter((task) => task.priority === 'high').length;
+
+    const today = new Date(Date.now());
+    today.setHours(0, 0, 0, 0);
+
+    const upcomingTasks = pendingTasks.filter((tasks) => new Date(tasks.date) >= today).slice(0, 3);
+    const tasksCompleted = tasks.length - pendingTasks.length;
+
+    return {
+      tasksPending: pendingTasks.length,
+      tasksUrgy: numberOfTasksUrgent,
+      tasksCompleted,
+      upcomingTasks,
     };
   }
 

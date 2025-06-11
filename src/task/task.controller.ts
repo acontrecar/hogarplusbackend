@@ -61,6 +61,13 @@ export class TaskController {
     return buildResponse(result, req.url, 'Task completed successfully');
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/:houseId/summary')
+  async summary(@Param('houseId') houseId: string, @GetUser() user: User, @Req() req: Request) {
+    const result = await this.taskService.summary(+houseId, user.id);
+    return buildResponse(result, req.url, 'Task summary found successfully');
+  }
+
   @Get()
   findAll() {
     return this.taskService.findAll();

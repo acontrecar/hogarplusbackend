@@ -13,6 +13,7 @@ import { MemberHome } from 'src/member_home/entities/member_home.entity';
 import { DebtMember } from './entities/debtMember.entity';
 import { Debt } from './entities/debt.entity';
 import { DebtStatus } from './infraestructure/debt.enums';
+import { GetDebtDashboardDto } from './dto/GetDebtDashboardDto';
 
 @Injectable()
 export class DebtsService {
@@ -217,6 +218,116 @@ export class DebtsService {
 
     return { debtIdDelete: debt.id };
   }
+
+  async summary(homeId: number, userId: number) {
+    // Obtener todas las deudas de la casa
+    const debts = await this.debtRepository.find({
+      where: {
+        home: { id: homeId },
+        status: DebtStatus.PENDING,
+        // creditor: { user: { id: userId } },
+      },
+      relations: [
+        'creditor',
+        'affectedMembers',
+        'affectedMembers.debtor',
+        'affectedMembers.debtor.user',
+        'creditor.user',
+      ],
+    });
+
+    let totalOwedToMe = 0;
+    debts.forEach((debt) => {
+      if (debt.creditor.user.id === userId) {
+        debt.affectedMembers.forEach((member) => {
+          if (!member.isPaid && member.debtor.user.id !== userId) {
+            totalOwedToMe += Number(member.amount);
+          }
+        });
+      }
+    });
+
+    // Obtener lo que yo debo
+    const myDebts = await this.debtMemberRepository.find({
+      where: {
+        debtor: { user: { id: userId } },
+        isPaid: false,
+      },
+      relations: ['debt', 'debt.creditor', 'debt.creditor.user'],
+    });
+
+    const filteredDebts = myDebts.filter(
+      (debtMember) => debtMember.debt.creditor.user.id !== userId,
+    );
+    const totalIOwe = filteredDebts.reduce((sum, part) => sum + Number(part.amount), 0);
+
+    const lastDebtIAffect = filteredDebts
+      .sort((a, b) => new Date(b.debt.createdAt).getTime() - new Date(a.debt.createdAt).getTime())
+      .slice(0, 3)
+      .map((debtmember) => ({
+        id: debtmember.debt.id,
+        description: debtmember.debt.description,
+        amount: Number(debtmember.amount),
+        creditor: {
+          id: debtmember.debt.creditor.user.id,
+          name: debtmember.debt.creditor.user.name,
+        },
+      }));
+
+    return { totalOwedToMe, totalIOwe, balance: totalOwedToMe - totalIOwe, lastDebtIAffect };
+  }
+
+  // async summary(homeId: number, userId: number): Promise<GetDebtDashboardDto> {
+  //   const myDebts = await this.debtRepository.find({
+  //     where: { creditor: { id: homeId } },
+  //     relations: ['affectedMembers', 'affectedMembers.debtor', 'affectedMembers.debtor.user'],
+  //   });
+
+  //   const totalOwedToMe = myDebts.reduce((sum, debt) => {
+  //     const unpaid = debt.affectedMembers.filter((m) => !m.isPaid);
+  //     return sum + unpaid.reduce((acc, m) => acc + Number(m.amount), 0);
+  //   }, 0);
+
+  //   // Lo que yo debo
+  //   const myDebtParts = await this.debtMemberRepository.find({
+  //     where: { debtor: { id: homeId }, isPaid: false },
+  //     relations: ['debt', 'debt.creditor'],
+  //   });
+
+  //   const totalIOwe = myDebtParts.reduce((sum, part) => sum + Number(part.amount), 0);
+
+  //   return {
+  //     totalOwedToMe,
+  //     totalIOwe,
+  //     balance: totalOwedToMe - totalIOwe,
+
+  //     myCreatedDebts: myDebts.map((debt) => ({
+  //       id: debt.id,
+  //       description: debt.description,
+  //       total: Number(debt.amount),
+  //       paid: debt.affectedMembers.reduce((acc, m) => acc + (m.isPaid ? Number(m.amount) : 0), 0),
+  //       createdAt: debt.createdAt,
+  //       affectedMembers: debt.affectedMembers.map((m) => ({
+  //         id: m.debtor.id,
+  //         name: m.debtor.user.name,
+  //         isPaid: m.isPaid,
+  //         amount: Number(m.amount),
+  //       })),
+  //     })),
+
+  //     debtsIAffect: myDebtParts.map((part) => ({
+  //       id: part.id,
+  //       description: part.debt.description,
+  //       amount: Number(part.amount),
+  //       isPaid: part.isPaid,
+  //       createdAt: part.debt.createdAt,
+  //       creditor: {
+  //         id: part.debt.id,
+  //         name: 'part.debtor.user.name',
+  //       },
+  //     })),
+  //   };
+  // }
 
   findAll() {
     return `This action returns all debts`;

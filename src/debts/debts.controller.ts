@@ -54,6 +54,13 @@ export class DebtsController {
     return buildResponse(result, req.url, 'Debt deleted paid successfully', HttpStatus.OK);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/:houseId/summary')
+  async summaryDebt(@Param('houseId') houseId: string, @GetUser() user: User, @Req() req: Request) {
+    const result = await this.debtsService.summary(+houseId, user.id);
+    return buildResponse(result, req.url, 'Debt summary found successfully');
+  }
+
   @Get()
   findAll() {
     return this.debtsService.findAll();
