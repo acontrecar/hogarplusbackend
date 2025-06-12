@@ -68,6 +68,13 @@ export class TaskController {
     return buildResponse(result, req.url, 'Task summary found successfully');
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('/:houseId/urgyTasks')
+  async urgyTasks(@Param('houseId') houseId: string, @GetUser() user: User, @Req() req: Request) {
+    const result = await this.taskService.getUrgyTasks(+houseId, user.id);
+    return buildResponse(result, req.url, 'Task summary found successfully');
+  }
+
   @Get()
   findAll() {
     return this.taskService.findAll();

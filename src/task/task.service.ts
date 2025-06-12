@@ -327,6 +327,29 @@ export class TaskService {
     };
   }
 
+  async getUrgyTasks(houseId: number, userId: number) {
+    const tasks = await this.taskRepo.find({
+      where: {
+        house: { id: houseId },
+        assignedTo: {
+          user: { id: userId },
+        },
+      },
+      relations: [
+        // 'assignedTo',
+        // 'assignedTo.user',
+        // 'house',
+        // 'completedBy',
+        // 'createdBy.user',
+        // 'completedBy.user',
+      ],
+    });
+
+    const urgyTasks = tasks.filter((task) => task.priority === 'high' && task.status === 'pending');
+
+    return { urgyTasks };
+  }
+
   findAll() {
     return `This action returns all task`;
   }
