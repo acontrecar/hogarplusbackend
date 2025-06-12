@@ -36,13 +36,13 @@ export class MemberHome {
   })
   role: string;
 
-  @OneToMany(() => Task, (task) => task.createdBy)
+  @OneToMany(() => Task, (task) => task.createdBy, { onDelete: 'CASCADE' })
   createdTasks: Task[];
 
-  @ManyToMany(() => Task, (task) => task.assignedTo)
+  @ManyToMany(() => Task, (task) => task.assignedTo, { onDelete: 'CASCADE' })
   assignedTasks: Task[];
 
-  @ManyToMany(() => Task, (task) => task.completedBy)
+  @ManyToMany(() => Task, (task) => task.completedBy, { onDelete: 'CASCADE' })
   completedByTasks: Task[];
 
   @CreateDateColumn()

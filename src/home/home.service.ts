@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateHomeDto } from './dto/create-home.dto';
 import { UpdateHomeDto } from './dto/update-home.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -131,7 +126,7 @@ export class HomeService {
     });
 
     if (!home) {
-      throw new NotFoundException('Home with that user not found');
+      throw new NotFoundException('Casa no encontrada');
     }
 
     const isAdmin = home.members.some(
@@ -139,7 +134,7 @@ export class HomeService {
     );
 
     if (isAdmin) {
-      throw new ForbiddenException('Yoy cannot exit from admin home');
+      throw new ForbiddenException('Si eres admin no puedes salir');
     }
 
     const memberHome = await this.memberHomeRepo.findOne({
@@ -147,12 +142,12 @@ export class HomeService {
     });
 
     if (!memberHome) {
-      throw new NotFoundException('Member not found in this home');
+      throw new NotFoundException('Miembro no encontrado en esta casa');
     }
 
     await this.memberHomeRepo.delete({ id: memberHome.id });
 
-    return { message: 'Member exited from home successfully' };
+    return { message: 'Miembro salido de la casa correctamente' };
   }
 
   async deletePerson(homeId: number, userId: number, personId: number) {
@@ -164,7 +159,7 @@ export class HomeService {
     });
 
     if (!home) {
-      throw new NotFoundException('Home with that user not found');
+      throw new NotFoundException('Casa no encontrada');
     }
 
     const isAdmin = home.members.some(
@@ -172,7 +167,7 @@ export class HomeService {
     );
 
     if (!isAdmin) {
-      throw new ForbiddenException('You are not admin of this home');
+      throw new ForbiddenException('No eres administrador de esta casa');
     }
 
     const memberHome = await this.memberHomeRepo.findOne({
@@ -180,17 +175,15 @@ export class HomeService {
     });
 
     if (!memberHome) {
-      throw new NotFoundException('Member not found in this home');
+      throw new NotFoundException('Miembro no encontrado en esta casa');
     }
 
     await this.memberHomeRepo.delete({ id: memberHome.id });
 
-    return { message: 'Member deleted from home successfully' };
+    return { message: 'Miembro eliminado de la casa correctamente' };
   }
 
   async joinHome(code: string, userId: number) {
-    this.logger.log('QUe paosa porra');
-    this.logger.log(`code: -${code}- userId: -${userId}-`);
     const home = await this.homeRepo.findOne({
       where: {
         invitationCode: code,
@@ -200,16 +193,14 @@ export class HomeService {
       },
     });
 
-    this.logger.log(`home: ${JSON.stringify(home)}`);
-
     if (!home) {
-      throw new NotFoundException('Home not found');
+      throw new NotFoundException('Casa no encontrada');
     }
 
     const isAlreadyMember = home.members.some((m) => m.user.id === userId);
 
     if (isAlreadyMember) {
-      throw new ForbiddenException('Member already in this home');
+      throw new ForbiddenException('El miembro ya esta en esta casa');
     }
 
     const member = this.memberHomeRepo.create({
@@ -219,14 +210,7 @@ export class HomeService {
 
     await this.memberHomeRepo.save(member);
 
-    // return {
-    //   data: {
-    //     homeId: home.id,
-    //     name: home.name,
-    //   },
-    // };
-
-    return { message: 'Member joined home successfully' };
+    return { message: 'Miembro unido a casa correctamente' };
   }
 
   findAll() {
@@ -275,8 +259,7 @@ export class HomeService {
   }
 
   private async generateUniqueInvitationCode(): Promise<string> {
-    const characters =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
     let code: string;
     let exists: Home | null;
@@ -284,9 +267,7 @@ export class HomeService {
     do {
       code = '';
       for (let i = 0; i < 15; i++) {
-        code += characters.charAt(
-          Math.floor(Math.random() * characters.length),
-        );
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
       }
 
       exists = await this.homeRepo.findOne({ where: { invitationCode: code } });

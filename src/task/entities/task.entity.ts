@@ -48,14 +48,16 @@ export class Task {
   @ManyToOne(() => Home, { onDelete: 'CASCADE' })
   house: Home;
 
-  @ManyToMany(() => MemberHome, (memberHome) => memberHome.createdTasks)
+  @ManyToMany(() => MemberHome, (memberHome) => memberHome.createdTasks, { onDelete: 'CASCADE' })
   @JoinTable()
   assignedTo: MemberHome[];
 
-  @ManyToOne(() => MemberHome, (memberHome) => memberHome.createdTasks)
+  @ManyToOne(() => MemberHome, (memberHome) => memberHome.createdTasks, { onDelete: 'CASCADE' })
   createdBy: MemberHome;
 
-  @ManyToMany(() => MemberHome, (memberHome) => memberHome.completedByTasks)
+  @ManyToMany(() => MemberHome, (memberHome) => memberHome.completedByTasks, {
+    onDelete: 'CASCADE',
+  })
   @JoinTable({ name: 'task_completed_by' })
   completedBy?: MemberHome[];
 
@@ -65,30 +67,3 @@ export class Task {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
-/* 
-{
-    id: "1",
-    title: "Limpiar cocina",
-    description: "Limpiar nevera y encimera",
-    date: new Date().toISOString().split("T")[0],
-    time: "19:00",
-    duration: "30 min",
-    assignedTo: ["user1", "user2"],
-    houseId: "house1",
-    status: "pending",
-    priority: "medium",
-  },
-  {
-    id: "2",
-    title: "Comprar suministros",
-    description: "Papel higiénico y lavavajillas",
-    date: new Date(Date.now() + 86400000).toISOString().split("T")[0], // Mañana
-    time: "10:00",
-    duration: "1h",
-    assignedTo: ["user3"],
-    houseId: "house1",
-    status: "pending",
-    priority: "high",
-  },
-*/

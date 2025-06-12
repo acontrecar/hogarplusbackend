@@ -10,7 +10,7 @@ export class DebtMember {
   @ManyToOne(() => Debt, (debt) => debt.affectedMembers, { onDelete: 'CASCADE' })
   debt: Debt;
 
-  @ManyToOne(() => MemberHome, { eager: true })
+  @ManyToOne(() => MemberHome, { eager: true, onDelete: 'CASCADE' })
   debtor: MemberHome;
 
   @Column('decimal', { precision: 10, scale: 2 })

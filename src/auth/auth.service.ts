@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
@@ -32,7 +27,7 @@ export class AuthService {
       return result;
     }
 
-    throw new UnauthorizedException('Invalid credentials');
+    throw new UnauthorizedException('Credenciales incorrectas');
   }
 
   getJwtToken(payload: { id: number; email: string }) {
@@ -54,7 +49,7 @@ export class AuthService {
     });
 
     if (existing) {
-      throw new BadRequestException('Email already exists');
+      throw new BadRequestException('El email ya existe');
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -67,7 +62,6 @@ export class AuthService {
 
     // return this.buildUserRO(savedUser);
     await this.userRepo.save(user);
-    this.logger.log(`Usuario creado: ${JSON.stringify(user)}`);
     const userRO = this.userService.buildUserRO(user);
 
     return {

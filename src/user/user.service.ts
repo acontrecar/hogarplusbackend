@@ -29,7 +29,7 @@ export class UserService {
     });
 
     if (existing) {
-      throw new BadRequestException('Email already exists');
+      throw new BadRequestException('El email ya existe');
     }
 
     const user = this.userRepo.create(dto);
@@ -47,11 +47,7 @@ export class UserService {
     // };
   }
 
-  async update(
-    id: number,
-    updateUserDto: UpdateUserDto | string,
-    file?: Express.Multer.File,
-  ) {
+  async update(id: number, updateUserDto: UpdateUserDto | string, file?: Express.Multer.File) {
     const user = await this.findById(id);
 
     let avatarUploadedUrl: string | undefined;
@@ -69,14 +65,10 @@ export class UserService {
       }
 
       const parsedDto =
-        typeof updateUserDto === 'string'
-          ? JSON.parse(updateUserDto)
-          : updateUserDto;
+        typeof updateUserDto === 'string' ? JSON.parse(updateUserDto) : updateUserDto;
 
       const cleanedDto: UpdateUserDto = Object.fromEntries(
-        Object.entries(parsedDto).filter(
-          ([_, v]) => v !== undefined && v !== '',
-        ),
+        Object.entries(parsedDto).filter(([_, v]) => v !== undefined && v !== ''),
       );
 
       if (cleanedDto.password) {
@@ -97,15 +89,14 @@ export class UserService {
       }
 
       const { password, ...result } = updatedUser;
-
-      this.logger.log(`password: ${password}`);
+      this.logger.log(`updatedUser: ${JSON.stringify(result)}`);
 
       return result;
     } catch (error) {
       if (avatarUploadedUrl) {
         await this.cloudinaryService.deleteFileByUrl(avatarUploadedUrl);
       }
-      throw new InternalServerErrorException('Failed to update user profile.');
+      throw new InternalServerErrorException('Error al actualizar el usario.');
     }
   }
 
@@ -115,7 +106,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Usuario no encontrado');
     }
 
     return user;
@@ -127,7 +118,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Usuario no encontrado');
     }
 
     return user;

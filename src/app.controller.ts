@@ -1,7 +1,6 @@
 import {
   Controller,
   // Controller,
-  Get,
   // Post,
   // UploadedFile,
   // UseInterceptors,
@@ -17,10 +16,10 @@ export class AppController {
     // private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
+  // @Get()
+  // getHello(): string {
+  //   return this.appService.getHello();
+  // }
 
   // @Post('upload')
   // @UseInterceptors(FileInterceptor('image'))

@@ -50,10 +50,10 @@ export class DebtsService {
         relations: ['home', 'user'],
       });
       if (!creditor) {
-        throw new NotFoundException(`Creditor with id ${userId} not found`);
+        throw new NotFoundException(`Creditor con id ${userId} no encontrado`);
       }
       if (creditor.home.id !== homeId) {
-        throw new BadRequestException('Creditor must belong to the specified home');
+        throw new BadRequestException('El creditor debe pertenecer a la casa especificada');
       }
 
       const affectedMembers = await manager.find(MemberHome, {
@@ -62,13 +62,13 @@ export class DebtsService {
       });
 
       if (affectedMembers.length !== affectedMemberIds.length) {
-        throw new BadRequestException('Members must belong to the specified home');
+        throw new BadRequestException('Los miembros deben pertenecer a la casa especificada');
       }
 
       const memberFromDiferrentHome = affectedMembers.filter((member) => member.home.id !== homeId);
 
       if (memberFromDiferrentHome.length > 0)
-        throw new BadRequestException('Members must belong to the specified home');
+        throw new BadRequestException('Los miembros deben pertenecer a la casa especificada');
 
       const amountPerMember = Number((amount / affectedMembers.length).toFixed(2));
 
@@ -104,7 +104,7 @@ export class DebtsService {
       //   relations: ['creditor', 'home', 'affectedMembers', 'affectedMembers.debtor'],
       // });
 
-      return { message: 'Debts created successfully' };
+      return { message: 'Deuda creada correctamente' };
     });
   }
 

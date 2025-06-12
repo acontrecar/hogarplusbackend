@@ -178,11 +178,12 @@ export class TaskService {
         },
       },
       relations: [
+        'house',
         'assignedTo',
         'assignedTo.user',
-        'house',
-        'completedBy',
+        'createdBy',
         'createdBy.user',
+        'completedBy',
         'completedBy.user',
       ],
     });

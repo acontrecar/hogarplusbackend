@@ -35,25 +35,25 @@ import {
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body('user') createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
+  // @Post()
+  // @HttpCode(HttpStatus.CREATED)
+  // create(@Body('user') createUserDto: CreateUserDto) {
+  //   return this.userService.create(createUserDto);
+  // }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  getMe(@Request() req) {
-    return req.user;
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('me')
+  // getMe(@Request() req) {
+  //   return req.user;
+  // }
 
   @UseGuards(JwtAuthGuard)
   @Patch()
   @UseInterceptors(FileInterceptor('image'))
-  @ApiOperation({ summary: 'Update user profile' })
+  @ApiOperation({ summary: 'Actualizar perfil de usuario' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateUserDto })
-  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 200, description: 'Usuario actualizado correctamente' })
   @ApiResponse({ status: 400, description: 'Invalid data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async uploadTest(
@@ -63,11 +63,6 @@ export class UserController {
     @Req() req: Request,
   ) {
     const result = await this.userService.update(user.id, updateUserDto, file);
-    return buildResponse(
-      result,
-      req.url,
-      'User updated successfully',
-      HttpStatus.OK,
-    );
+    return buildResponse(result, req.url, 'Usuario actualizado correctamente', HttpStatus.OK);
   }
 }

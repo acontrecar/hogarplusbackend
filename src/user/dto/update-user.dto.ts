@@ -3,41 +3,42 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({
-    example: 'Jane Doe',
-    description: 'Updated name of the user',
+    example: 'Juan Pérezz',
+    description: 'Nombre completo del usuario',
   })
   @IsOptional()
   @IsString()
   readonly name?: string;
 
   @ApiPropertyOptional({
-    example: 'jane.doe@example.com',
-    description: 'Updated email address',
+    example: 'juan.perez@example.com',
+    description: 'Dirección de correo electrónico del usuario',
   })
   @IsOptional()
-  @IsEmail({}, { message: 'Email must be valid' })
+  @IsEmail({}, { message: 'El email debe tener un formato válido' })
   readonly email?: string;
 
   @ApiPropertyOptional({
-    example: 'newpassword123',
-    description: 'Updated password (minimum 6 characters)',
+    example: 'nuevaPassword123',
+    description: 'Contraseña nueva (mínimo 6 caracteres)',
     minLength: 6,
   })
   @IsOptional()
-  @MinLength(6, { message: 'Password must be at least 6 characters' })
+  @MinLength(6, {
+    message: 'La contraseña debe tener al menos 6 caracteres',
+  })
   password?: string;
 
   @ApiPropertyOptional({
-    example: '+34123456789',
-    description: 'Updated phone number',
+    example: '123456789',
+    description: 'Número de teléfono del usuario',
   })
   @IsOptional()
   @IsString()
   readonly phone?: string;
 
   @ApiPropertyOptional({
-    example:
-      'https://res.cloudinary.com/demo/image/upload/v1680000000/avatar.png',
+    example: 'https://res.cloudinary.com/demo/image/upload/v1680000000/avatar.png',
     description: 'URL of the updated avatar image',
   })
   @IsOptional()

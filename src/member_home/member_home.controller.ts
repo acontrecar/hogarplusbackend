@@ -7,28 +7,28 @@ import { UpdateMemberHomeDto } from './dto/update-member_home.dto';
 export class MemberHomeController {
   constructor(private readonly memberHomeService: MemberHomeService) {}
 
-  @Post()
-  create(@Body() createMemberHomeDto: CreateMemberHomeDto) {
-    return this.memberHomeService.create(createMemberHomeDto);
-  }
+  // @Post()
+  // create(@Body() createMemberHomeDto: CreateMemberHomeDto) {
+  //   return this.memberHomeService.create(createMemberHomeDto);
+  // }
 
-  @Get()
-  findAll() {
-    return this.memberHomeService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.memberHomeService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.memberHomeService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.memberHomeService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMemberHomeDto: UpdateMemberHomeDto) {
-    return this.memberHomeService.update(+id, updateMemberHomeDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateMemberHomeDto: UpdateMemberHomeDto) {
+  //   return this.memberHomeService.update(+id, updateMemberHomeDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.memberHomeService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.memberHomeService.remove(+id);
+  // }
 }

@@ -6,7 +6,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { MemberHome } from 'src/member_home/entities/member_home.entity';
 
 @Entity()

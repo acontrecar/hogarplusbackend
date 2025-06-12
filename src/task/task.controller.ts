@@ -13,18 +13,23 @@ import {
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/user/entities/user.entity';
 import { buildResponse } from 'src/common/helper/build-response.helper';
 import { DeleteTaskDto } from './dto/delete-task.dto';
 
-@ApiTags('Task')
+@ApiTags('Tareas')
+@ApiBearerAuth()
 @Controller('task')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
+  @ApiOperation({ summary: 'Crear una tarea' })
+  @ApiBody({
+    type: CreateTaskDto,
+  })
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() createTaskDto: CreateTaskDto, @GetUser() user: User, @Req() req: Request) {
@@ -32,6 +37,10 @@ export class TaskController {
     return buildResponse(result, req.url, 'Task created successfully', HttpStatus.CREATED);
   }
 
+  @ApiOperation({ summary: 'Borrar una tarea' })
+  @ApiBody({
+    type: DeleteTaskDto,
+  })
   @UseGuards(JwtAuthGuard)
   @Post('/house')
   async removeTaskByHouse(
@@ -43,6 +52,8 @@ export class TaskController {
     return buildResponse(result, req.url, 'Task removed successfully');
   }
 
+  @ApiOperation({ summary: 'Obtener todas las tareas de una casa' })
+  @ApiParam({ name: 'houseId', description: 'Id de la casa', example: 2 })
   @UseGuards(JwtAuthGuard)
   @Get('/house/:houseId')
   async findTasksByHouse(
@@ -75,23 +86,23 @@ export class TaskController {
     return buildResponse(result, req.url, 'Task summary found successfully');
   }
 
-  @Get()
-  findAll() {
-    return this.taskService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.taskService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.taskService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.taskService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.taskService.update(+id, updateTaskDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
+  //   return this.taskService.update(+id, updateTaskDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.taskService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.taskService.remove(+id);
+  // }
 }
