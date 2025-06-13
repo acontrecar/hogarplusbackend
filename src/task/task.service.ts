@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -99,6 +104,73 @@ export class TaskService {
     return { task: formattedTask };
   }
 
+  // async findTasksByHouse(houseId: number, userId: number) {
+  //   // 1. Verificar que el usuario es miembro de la casa
+  //   const memberHome = await this.memberHomeRepo.findOne({
+  //     where: {
+  //       user: { id: userId },
+  //       home: { id: houseId },
+  //     },
+  //     relations: ['home', 'user'],
+  //   });
+
+  //   if (!memberHome) {
+  //     throw new ForbiddenException('User is not a member of this house');
+  //   }
+
+  //   // 2. Obtener tareas con relaciones completas
+  //   const tasks = await this.taskRepo.find({
+  //     where: [
+  //       {
+  //         house: { id: houseId },
+  //         createdBy: { id: memberHome.id },
+  //       },
+  //       {
+  //         house: { id: houseId },
+  //         assignedTo: { id: memberHome.id },
+  //       },
+  //     ],
+  //     relations: [
+  //       'house',
+  //       'assignedTo',
+  //       'assignedTo.user',
+  //       'createdBy',
+  //       'createdBy.user',
+  //       'completedBy',
+  //       'completedBy.user',
+  //       'createdBy.user',
+  //     ],
+  //   });
+
+  //   // 3. Formatear la respuesta para incluir los nombres
+  //   const formattedTasks = tasks.map((task) => ({
+  //     ...task,
+  //     assignedTo: task.assignedTo.map((member) => ({
+  //       id: member.id,
+  //       name: member.user.name,
+  //       userId: member.user.id,
+  //       role: member.role,
+  //       createdAt: member.createdAt,
+  //     })),
+  //     createdBy: {
+  //       id: task.createdBy.id,
+  //       userId: task.createdBy.user.id,
+  //       name: task.createdBy.user.name,
+  //       role: task.createdBy.role,
+  //       createdAt: task.createdBy.createdAt,
+  //     },
+  //     completedBy: task.completedBy?.map((member) => ({
+  //       id: member?.id,
+  //       name: member?.user?.name,
+  //       userId: member?.user?.id,
+  //       role: member?.role,
+  //       createdAt: member?.createdAt,
+  //     })),
+  //   }));
+
+  //   return { tasks: formattedTasks };
+  // }
+
   async findTasksByHouse(houseId: number, userId: number) {
     // 1. Verificar que el usuario es miembro de la casa
     const memberHome = await this.memberHomeRepo.findOne({
@@ -113,18 +185,22 @@ export class TaskService {
       throw new ForbiddenException('User is not a member of this house');
     }
 
-    // 2. Obtener tareas con relaciones completas
+    // 2. Primero obtener los IDs de las tareas donde el usuario participa
+    const taskIds = await this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoin('task.assignedTo', 'assigned')
+      .where('task.house.id = :houseId', { houseId })
+      .andWhere('(task.createdBy.id = :memberHomeId OR assigned.id = :memberHomeId)', {
+        memberHomeId: memberHome.id,
+      })
+      .select('task.id')
+      .getMany();
+
+    // 3. Obtener las tareas completas con todas sus relaciones
     const tasks = await this.taskRepo.find({
-      where: [
-        {
-          house: { id: houseId },
-          createdBy: { id: memberHome.id },
-        },
-        {
-          house: { id: houseId },
-          assignedTo: { id: memberHome.id },
-        },
-      ],
+      where: {
+        id: In(taskIds.map((task) => task.id)),
+      },
       relations: [
         'house',
         'assignedTo',
@@ -133,11 +209,10 @@ export class TaskService {
         'createdBy.user',
         'completedBy',
         'completedBy.user',
-        'createdBy.user',
       ],
     });
 
-    // 3. Formatear la respuesta para incluir los nombres
+    // 4. Formatear la respuesta (tu código actual está bien)
     const formattedTasks = tasks.map((task) => ({
       ...task,
       assignedTo: task.assignedTo.map((member) => ({
@@ -219,28 +294,120 @@ export class TaskService {
     return { task: taskToReturn };
   }
 
+  // async completeTask(taskId: number, userId: number) {
+  //   const task = await this.taskRepo.findOne({
+  //     where: {
+  //       id: taskId,
+  //       assignedTo: {
+  //         user: { id: userId },
+  //       },
+  //     },
+  //     relations: [
+  //       'assignedTo',
+  //       'assignedTo.user',
+  //       'house',
+  //       'completedBy',
+  //       'createdBy.user',
+  //       'completedBy.user',
+  //     ],
+  //   });
+
+  //   if (!task) {
+  //     throw new NotFoundException('Tarea no encontrada');
+  //   }
+
+  //   const memberHome = await this.memberHomeRepo.findOne({
+  //     where: {
+  //       user: { id: userId },
+  //       home: { id: task.house.id },
+  //     },
+  //     relations: ['user'],
+  //   });
+
+  //   if (!memberHome) {
+  //     throw new ForbiddenException('Usuario no es miembro de la casa');
+  //   }
+
+  //   task.assignedTo = task.assignedTo.filter((member) => member.id !== memberHome.id);
+
+  //   task.completedBy?.push(memberHome);
+
+  //   if (task.assignedTo.length === 0) {
+  //     task.status = 'completed';
+  //   }
+
+  //   await this.taskRepo.save(task);
+
+  //   const taskToReturn = {
+  //     ...task,
+  //     assignedTo: task.assignedTo.map((member) => ({
+  //       id: member.id,
+  //       name: member.user.name,
+  //       userId: member.user.id,
+  //       role: member.role,
+  //       createdAt: member.createdAt,
+  //     })),
+  //     createdBy: {
+  //       id: task.createdBy.id,
+  //       name: task.createdBy.user.name,
+  //       userId: task.createdBy?.user?.id,
+  //       role: task.createdBy.role,
+  //       createdAt: task.createdBy.createdAt,
+  //     },
+  //     completedBy: task.completedBy?.map((member) => ({
+  //       id: member.id,
+  //       name: member.user.name,
+  //       userId: member?.user?.id,
+  //       role: member.role,
+  //       createdAt: member.createdAt,
+  //     })),
+  //   };
+
+  //   return {
+  //     task: taskToReturn,
+  //   };
+  // }
+
   async completeTask(taskId: number, userId: number) {
-    const task = await this.taskRepo.findOne({
+    // 1. Buscar la tarea y verificar que el usuario esté asignado
+
+    const taskExists = await this.taskRepo.findOne({
       where: {
         id: taskId,
         assignedTo: {
           user: { id: userId },
         },
       },
+      relations: ['assignedTo', 'assignedTo.user'],
+    });
+
+    if (!taskExists) {
+      throw new NotFoundException('Tarea no encontrada o el usuario no está asignado a la tarea');
+    }
+
+    const task = await this.taskRepo.findOne({
+      where: {
+        id: taskId,
+        // assignedTo: {
+        //   user: { id: In([userId]) },
+        // },
+      },
       relations: [
         'assignedTo',
         'assignedTo.user',
         'house',
         'completedBy',
-        'createdBy.user',
         'completedBy.user',
+        'createdBy',
+        'createdBy.user',
       ],
     });
 
     if (!task) {
-      throw new NotFoundException('Task not found');
+      throw new NotFoundException('Tarea no encontrada o el usuario no está asignado a la tarea');
     }
 
+    // 2. Obtener el memberHome del usuario
     const memberHome = await this.memberHomeRepo.findOne({
       where: {
         user: { id: userId },
@@ -250,19 +417,33 @@ export class TaskService {
     });
 
     if (!memberHome) {
-      throw new ForbiddenException('User is not a member of this house');
+      throw new ForbiddenException('El usuario no es miembro de la casa');
     }
 
+    // 3. Verificar que el usuario no haya completado ya la tarea
+    const alreadyCompleted = task.completedBy?.some((member) => member.id === memberHome.id);
+    if (alreadyCompleted) {
+      throw new BadRequestException('El usuario ya ha completado esta tarea');
+    }
+
+    // 4. Remover el usuario de assignedTo
     task.assignedTo = task.assignedTo.filter((member) => member.id !== memberHome.id);
 
-    task.completedBy?.push(memberHome);
+    // 5. Agregar el usuario a completedBy (inicializar si es null/undefined)
+    if (!task.completedBy) {
+      task.completedBy = [];
+    }
+    task.completedBy.push(memberHome);
 
+    // 6. Si no quedan usuarios asignados, marcar como completada
     if (task.assignedTo.length === 0) {
       task.status = 'completed';
     }
 
+    // 7. Guardar los cambios
     await this.taskRepo.save(task);
 
+    // 8. Formatear la respuesta
     const taskToReturn = {
       ...task,
       assignedTo: task.assignedTo.map((member) => ({
@@ -275,14 +456,14 @@ export class TaskService {
       createdBy: {
         id: task.createdBy.id,
         name: task.createdBy.user.name,
-        userId: task.createdBy?.user?.id,
+        userId: task.createdBy.user.id,
         role: task.createdBy.role,
         createdAt: task.createdBy.createdAt,
       },
       completedBy: task.completedBy?.map((member) => ({
         id: member.id,
         name: member.user.name,
-        userId: member?.user?.id,
+        userId: member.user.id,
         role: member.role,
         createdAt: member.createdAt,
       })),
